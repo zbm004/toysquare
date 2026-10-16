@@ -17,7 +17,7 @@ export const Route = createFileRoute("/inventory")({
 });
 
 type Draft = Omit<Product, "id"> & { id?: string };
-const blank: Draft = { name: "", category: "Squishies", icon: "🍡", cost: 0, price: 0, stock: 0, subcategory: "" };
+const blank: Draft = { name: "", category: "Squishies", icon: "🍡", cost: 0, price: 0, stock: 0 };
 
 function Inventory() {
   const { products } = useStore();
@@ -45,8 +45,8 @@ function Inventory() {
           return (
             <div key={p.id} className={`grid grid-cols-2 items-center gap-2 rounded-xl border bg-card p-3 text-sm md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_80px] ${isLow ? "border-destructive/50" : ""}`}>
               <div className="col-span-2 flex items-center gap-2 md:col-span-1">
-                <span className="text-2xl">{CATEGORY_ICON[p.category]}</span>
-                <div className="min-w-0"><p className="truncate font-bold">{p.name}</p><p className="text-xs text-muted-foreground">{p.category}{p.subcategory ? ` · ${p.subcategory}` : ""}</p></div>
+                <span className="text-2xl">{p.icon}</span>
+                <div className="min-w-0"><p className="truncate font-bold">{p.name}</p><p className="text-xs text-muted-foreground">{p.category}</p></div>
               </div>
               <Cell l="Cost" v={money(p.cost)} />
               <Cell l="Price" v={money(p.price)} />
@@ -74,28 +74,21 @@ function Cell({ l, v }: { l: string; v: React.ReactNode }) {
 
 function Editor({ draft, close }: { draft: Draft; close: () => void }) {
   const [d, setD] = useState(draft);
-  const { subcategories } = useStore();
   const f = "mt-1 w-full rounded-lg border bg-secondary px-3 py-2 text-sm outline-none focus:border-primary";
   const save = () => {
     if (!d.name.trim()) { toast.error("Name is required"); return; }
-    actions.upsertProduct({ ...d, icon: CATEGORY_ICON[d.category] }); toast.success(d.id ? "Item updated" : "Item added"); close();
+    actions.upsertProduct(d); toast.success(d.id ? "Item updated" : "Item added"); close();
   };
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 backdrop-blur-sm sm:items-center" onClick={close}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl border bg-card p-5 sm:rounded-3xl">
         <div className="flex justify-between"><h3 className="text-lg font-bold">{d.id ? "Edit Item" : "New Item"}</h3><button onClick={close}><X className="h-5 w-5" /></button></div>
         <div className="mt-4 grid grid-cols-4 gap-3 text-xs font-semibold text-muted-foreground">
-          <div className="col-span-1 flex items-end justify-center pb-1 text-3xl">{CATEGORY_ICON[d.category]}</div>
+          <label className="col-span-1">Icon<input value={d.icon} onChange={(e) => setD({ ...d, icon: e.target.value })} className={f + " text-center"} /></label>
           <label className="col-span-3">Name<input value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} className={f} /></label>
           <label className="col-span-4">Category
-            <select value={d.category} onChange={(e) => { const c = e.target.value as Category; setD({ ...d, category: c, icon: CATEGORY_ICON[c], subcategory: "" }); }} className={f}>
+            <select value={d.category} onChange={(e) => { const c = e.target.value as Category; setD({ ...d, category: c, icon: d.id ? d.icon : CATEGORY_ICON[c] }); }} className={f}>
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-            </select>
-          </label>
-          <label className="col-span-4">Sub-category
-            <select value={d.subcategory} onChange={(e) => setD({ ...d, subcategory: e.target.value })} className={f}>
-              <option value="">None</option>
-              {subcategories.filter((x) => x.category === d.category).map((x) => <option key={x.id}>{x.name}</option>)}
             </select>
           </label>
           {(["cost", "price", "stock"] as const).map((k) => (

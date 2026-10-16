@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Minus, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { actions, buildSale, CATEGORIES, CATEGORY_ICON, money, useStore, type SaleItem } from "@/lib/store";
+import { actions, buildSale, CATEGORIES, money, useStore, type SaleItem } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -125,7 +125,7 @@ function POS() {
                   {p.stock} left
                 </span>
                 {cart[p.id] && <span className="absolute left-2 top-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">×{cart[p.id]}</span>}
-                <div className="py-3 text-center text-5xl">{CATEGORY_ICON[p.category]}</div>
+                <div className="py-3 text-center text-5xl">{p.icon}</div>
                 <p className="truncate text-sm font-bold">{p.name}</p>
                 <p className="text-[11px] text-muted-foreground">{p.category}</p>
                 <p className="mt-1 font-display text-lg font-bold text-primary">{money(p.price)}</p>

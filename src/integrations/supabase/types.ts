@@ -24,7 +24,6 @@ export type Database = {
           name: string
           price: number
           stock: number
-          subcategory: string
           user_id: string
         }
         Insert: {
@@ -36,7 +35,6 @@ export type Database = {
           name: string
           price?: number
           stock?: number
-          subcategory?: string
           user_id?: string
         }
         Update: {
@@ -48,7 +46,6 @@ export type Database = {
           name?: string
           price?: number
           stock?: number
-          subcategory?: string
           user_id?: string
         }
         Relationships: []
@@ -91,30 +88,6 @@ export type Database = {
           subtotal?: number
           tax?: number
           total?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      subcategories: {
-        Row: {
-          category: string
-          created_at: string
-          id: string
-          name: string
-          user_id: string
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          id?: string
-          name: string
-          user_id?: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          id?: string
-          name?: string
           user_id?: string
         }
         Relationships: []
