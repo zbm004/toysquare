@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const CATEGORIES = ["Squishies", "Walking Animals", "Anime Figures", "RC Cars", "Keychains", "Other"] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -14,7 +16,6 @@ export type Sale = {
 };
 type State = { products: Product[]; sales: Sale[] };
 
-const KEY = "toykiosk-pos-v1";
 const uid = () => Math.random().toString(36).slice(2, 9).toUpperCase();
 
 function demo(): State {
@@ -61,37 +62,93 @@ export function buildSale(items: SaleItem[], discountPct: number, taxPct: number
 
 let state: State = { products: [], sales: [] };
 let loaded = false;
+let loading = false;
 const listeners = new Set<() => void>();
-function load() {
-  if (loaded || typeof window === "undefined") return;
-  loaded = true;
-  try { const s = localStorage.getItem(KEY); state = s ? JSON.parse(s) : demo(); } catch { state = demo(); }
-  localStorage.setItem(KEY, JSON.stringify(state));
-}
-function set(next: State) { state = next; localStorage.setItem(KEY, JSON.stringify(state)); listeners.forEach((l) => l()); }
+const emit = () => listeners.forEach((l) => l());
+function set(next: State) { state = next; emit(); }
 const EMPTY: State = { products: [], sales: [] };
+
+const n = (v: unknown) => Number(v);
+function rowToProduct(r: any): Product { return { id: r.id, name: r.name, category: r.category, icon: r.icon, cost: n(r.cost), price: n(r.price), stock: r.stock }; }
+function rowToSale(r: any): Sale {
+  return { id: r.id, date: r.date, items: r.items, subtotal: n(r.subtotal), discount: n(r.discount), tax: n(r.tax), cardFee: n(r.card_fee), total: n(r.total), method: r.method, cogs: n(r.cogs) };
+}
+const saleRow = (s: Sale) => ({ id: s.id, date: s.date, items: s.items as any, subtotal: s.subtotal, discount: s.discount, tax: s.tax, card_fee: s.cardFee, total: s.total, method: s.method, cogs: s.cogs });
+const fail = (e: { message: string } | null) => { if (e) { toast.error(e.message); throw e; } };
+
+async function fetchAll() {
+  const [p, s] = await Promise.all([
+    supabase.from("products").select("*").order("created_at"),
+    supabase.from("sales").select("*").order("date").limit(5000),
+  ]);
+  fail(p.error); fail(s.error);
+  return { products: (p.data ?? []).map(rowToProduct), sales: (s.data ?? []).map(rowToSale) };
+}
+
+async function seedDemo() {
+  const d = demo();
+  const { data, error } = await supabase.from("products").insert(d.products.map(({ id: _id, ...x }) => x)).select("*");
+  fail(error);
+  const idMap = new Map(d.products.map((p, i) => [p.id, data![i]!.id as string]));
+  const sales = d.sales.map((s) => ({ ...s, items: s.items.map((i) => ({ ...i, productId: idMap.get(i.productId)! })) }));
+  for (let i = 0; i < sales.length; i += 200) fail((await supabase.from("sales").insert(sales.slice(i, i + 200).map(saleRow))).error);
+}
+
+export async function loadStore() {
+  if (loading) return;
+  loading = true;
+  try {
+    let next = await fetchAll();
+    if (next.products.length === 0 && next.sales.length === 0) { await seedDemo(); next = await fetchAll(); }
+    loaded = true; set(next);
+  } finally { loading = false; }
+}
+export function clearStore() { loaded = false; set(EMPTY); }
+export function useStoreLoaded() {
+  return useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => loaded, () => false);
+}
 
 export function useStore() {
   return useSyncExternalStore(
-    (l) => { load(); listeners.add(l); l(); return () => listeners.delete(l); },
+    (l) => { listeners.add(l); return () => listeners.delete(l); },
     () => (loaded ? state : EMPTY), () => EMPTY,
   );
 }
 
 export const actions = {
-  upsertProduct(p: Omit<Product, "id"> & { id?: string }) {
-    const products = p.id ? state.products.map((x) => (x.id === p.id ? (p as Product) : x)) : [...state.products, { ...p, id: uid() }];
-    set({ ...state, products });
+  async upsertProduct(p: Omit<Product, "id"> & { id?: string }) {
+    const { id, ...rest } = p;
+    if (id) {
+      fail((await supabase.from("products").update(rest).eq("id", id)).error);
+      set({ ...state, products: state.products.map((x) => (x.id === id ? (p as Product) : x)) });
+    } else {
+      const { data, error } = await supabase.from("products").insert(rest).select("*").single();
+      fail(error);
+      set({ ...state, products: [...state.products, rowToProduct(data)] });
+    }
   },
-  deleteProduct(id: string) { set({ ...state, products: state.products.filter((p) => p.id !== id) }); },
-  checkout(sale: Sale) {
+  async deleteProduct(id: string) {
+    fail((await supabase.from("products").delete().eq("id", id)).error);
+    set({ ...state, products: state.products.filter((p) => p.id !== id) });
+  },
+  async checkout(sale: Sale) {
+    fail((await supabase.from("sales").insert(saleRow(sale))).error);
     const products = state.products.map((p) => {
       const it = sale.items.find((i) => i.productId === p.id);
       return it ? { ...p, stock: Math.max(0, p.stock - it.qty) } : p;
     });
+    await Promise.all(products.filter((p) => sale.items.some((i) => i.productId === p.id))
+      .map((p) => supabase.from("products").update({ stock: p.stock }).eq("id", p.id)));
     set({ products, sales: [...state.sales, sale] });
   },
-  reset() { set(demo()); },
+  async reset() {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) return;
+    fail((await supabase.from("sales").delete().eq("user_id", data.user.id)).error);
+    fail((await supabase.from("products").delete().eq("user_id", data.user.id)).error);
+    await seedDemo();
+    set(await fetchAll());
+  },
 };
 
 export type Range = "today" | "week" | "month" | "all";
