@@ -25,7 +25,7 @@ export function SignIn() {
           <h1 className="text-2xl font-bold"><span className="text-primary">Toy</span>Kiosk</h1>
           <p className="mt-1 text-sm text-muted-foreground">{mode === "in" ? "Sign in to your kiosk" : "Create your kiosk account"}</p>
         </div>
-        <button type="button" onClick={async () => { const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin }); if (r?.error) toast.error(String(r.error.message ?? r.error)); }}
+        <button type="button" onClick={async () => { const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin }); if (r?.error) toast.error(r.error instanceof Error ? r.error.message : String(r.error)); }}
           className="w-full rounded-xl bg-secondary py-3 text-sm font-semibold hover:bg-secondary/70">Continue with Google</button>
         <div className="text-center text-xs text-muted-foreground">or</div>
         <form onSubmit={submit} className="space-y-3">
