@@ -14,7 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          category: string
+          cost: number
+          created_at: string
+          icon: string
+          id: string
+          name: string
+          price: number
+          stock: number
+          user_id: string
+        }
+        Insert: {
+          category: string
+          cost?: number
+          created_at?: string
+          icon?: string
+          id?: string
+          name: string
+          price?: number
+          stock?: number
+          user_id?: string
+        }
+        Update: {
+          category?: string
+          cost?: number
+          created_at?: string
+          icon?: string
+          id?: string
+          name?: string
+          price?: number
+          stock?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          card_fee: number
+          cogs: number
+          date: string
+          discount: number
+          id: string
+          items: Json
+          method: string
+          subtotal: number
+          tax: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          card_fee?: number
+          cogs?: number
+          date?: string
+          discount?: number
+          id: string
+          items?: Json
+          method?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          user_id?: string
+        }
+        Update: {
+          card_fee?: number
+          cogs?: number
+          date?: string
+          discount?: number
+          id?: string
+          items?: Json
+          method?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
