@@ -45,12 +45,12 @@ function Analytics() {
         <h3 className="font-bold">Monthly Revenue vs Expenses vs Profit</h3>
         <div className="mt-3 h-72">
           {mounted && (
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={mData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={11} />
                 <YAxis stroke="var(--muted-foreground)" fontSize={11} width={40} />
-                <Tooltip {...tip} formatter={(v: number) => money(v)} cursor={{ fill: "var(--secondary)" }} />
+                <Tooltip {...tip} formatter={(v) => money(Number(v))} cursor={{ fill: "var(--secondary)" }} />
                 <Legend />
                 <Bar dataKey="Revenue" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="Expenses" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
@@ -68,7 +68,7 @@ function Analytics() {
         <div className="mt-3 grid gap-4 md:grid-cols-2">
           <div className="h-64">
             {mounted && (
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={cData} layout="vertical">
                   <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
                   <YAxis type="category" dataKey="name" stroke="var(--muted-foreground)" fontSize={11} width={100} />
@@ -80,7 +80,7 @@ function Analytics() {
           </div>
           <div className="h-64">
             {mounted && (
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={cData.filter((c) => c.value)} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={3} stroke="none">
                     {cData.filter((c) => c.value).map((c) => <Cell key={c.name} fill={COLORS[CATEGORIES.indexOf(c.name as never)] ?? "var(--chart-1)"} />)}
