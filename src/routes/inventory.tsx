@@ -76,7 +76,7 @@ function Editor({ draft, close }: { draft: Draft; close: () => void }) {
   const [d, setD] = useState(draft);
   const f = "mt-1 w-full rounded-lg border bg-secondary px-3 py-2 text-sm outline-none focus:border-primary";
   const save = () => {
-    if (!d.name.trim()) return toast.error("Name is required");
+    if (!d.name.trim()) { toast.error("Name is required"); return; }
     actions.upsertProduct(d); toast.success(d.id ? "Item updated" : "Item added"); close();
   };
   return (

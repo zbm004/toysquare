@@ -73,7 +73,7 @@ function Analytics() {
                   <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
                   <YAxis type="category" dataKey="name" stroke="var(--muted-foreground)" fontSize={11} width={100} />
                   <Tooltip {...tip} cursor={{ fill: "var(--secondary)" }} />
-                  <Bar dataKey="value" name="Units" radius={[0, 6, 6, 0]}>{cData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}</Bar>
+                  <Bar dataKey="value" name="Units" radius={[0, 6, 6, 0]}>{cData.map((_, i) => <Cell key={i} fill={COLORS[i] ?? "var(--chart-1)"} />)}</Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -83,7 +83,7 @@ function Analytics() {
               <ResponsiveContainer>
                 <PieChart>
                   <Pie data={cData.filter((c) => c.value)} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={3} stroke="none">
-                    {cData.filter((c) => c.value).map((c) => <Cell key={c.name} fill={COLORS[CATEGORIES.indexOf(c.name as never)]} />)}
+                    {cData.filter((c) => c.value).map((c) => <Cell key={c.name} fill={COLORS[CATEGORIES.indexOf(c.name as never)] ?? "var(--chart-1)"} />)}
                   </Pie>
                   <Tooltip {...tip} itemStyle={{ color: "var(--foreground)" }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
