@@ -35,7 +35,7 @@ function Analytics() {
   const mData = [...monthly.values()].sort((a, b) => a.k.localeCompare(b.k)).map((m) => ({ ...m, Revenue: +m.Revenue.toFixed(2), Expenses: +m.Expenses.toFixed(2), Profit: +m.Profit.toFixed(2) }));
 
   const cat = Object.fromEntries(CATEGORIES.map((c) => [c, 0])) as Record<string, number>;
-  sales.filter((s) => inRange(s.date, range)).forEach((s) => s.items.forEach((i) => (cat[i.category] += i.qty)));
+  sales.filter((s) => inRange(s.date, range)).forEach((s) => s.items.forEach((i) => (cat[i.category] = (cat[i.category] ?? 0) + i.qty)));
   const cData = CATEGORIES.map((c) => ({ name: c, value: cat[c] }));
 
   return (

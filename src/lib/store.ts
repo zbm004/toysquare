@@ -36,7 +36,7 @@ function demo(): State {
       const items: SaleItem[] = [];
       const cnt = 1 + Math.floor(Math.random() * 3);
       for (let i = 0; i < cnt; i++) {
-        const pr = p[Math.floor(Math.random() * p.length)];
+        const pr = p[Math.floor(Math.random() * p.length)]!;
         const ex = items.find((x) => x.productId === pr.id);
         if (ex) ex.qty++; else items.push({ productId: pr.id, name: pr.name, category: pr.category, qty: 1, cost: pr.cost, price: pr.price });
       }
