@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Minus, Plus, Search, Trash2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { actions, buildSale, CATEGORIES, money, useStore, type SaleItem } from "@/lib/store";
+import { actions, DEFAULT_CHARGES, localSaleDate, buildSale, CATEGORIES, money, useStore, type SaleItem } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -11,6 +12,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Fast checkout for the toy kiosk: search, cart, discounts, tax and payment." },
       { property: "og:title", content: "Checkout — Toy Kiosk POS" },
       { property: "og:description", content: "Fast checkout for the toy kiosk." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: POS,
@@ -22,9 +25,15 @@ function POS() {
   const [cat, setCat] = useState<string>("All");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [method, setMethod] = useState<"Cash" | "Card">("Cash");
-  const [discount, setDiscount] = useState(0);
-  const [tax, setTax] = useState(8);
-  const [cardFee, setCardFee] = useState(2.5);
+  const [discount, setDiscount] = useState<number>(DEFAULT_CHARGES.discount);
+  const [tax, setTax] = useState<number>(DEFAULT_CHARGES.tax);
+  const [cardFee, setCardFee] = useState<number>(DEFAULT_CHARGES.cardFee);
+  const [saleDate, setSaleDate] = useState("");
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    const now = new Date();
+    setSaleDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`);
+  }, []);
   const [open, setOpen] = useState(false);
 
   const list = products.filter((p) => (cat === "All" || p.category === cat) && p.name.toLowerCase().includes(q.toLowerCase()));
@@ -36,7 +45,8 @@ function POS() {
   const count = items.reduce((s, i) => s + i.qty, 0);
 
   const add = (id: string, d: number) => {
-    const p = products.find((x) => x.id === id)!;
+    const p = products.find((x) => x.id === id);
+    if (!p) return;
     setCart((c) => {
       const n = Math.min(p.stock, (c[id] ?? 0) + d);
       const next = { ...c };
@@ -44,11 +54,16 @@ function POS() {
       return next;
     });
   };
-  const checkout = () => {
-    if (!items.length) return;
-    actions.checkout(sale);
-    setCart({}); setDiscount(0); setOpen(false);
-    toast.success(`Sale complete · ${money(sale.total)} (${method})`);
+  const checkout = async () => {
+    if (!items.length || saving) return;
+    setSaving(true);
+    try {
+      const datedSale = buildSale(items, discount, tax, cardFee, method, localSaleDate(saleDate));
+      await actions.checkout(datedSale);
+      setCart({}); setDiscount(0); setOpen(false);
+      toast.success(`Sale complete · ${money(datedSale.total)} (${method})`);
+    } catch { toast.error("Sale could not be saved. Please try again."); }
+    finally { setSaving(false); }
   };
 
   const cartPanel = (
@@ -81,6 +96,9 @@ function POS() {
             </button>
           ))}
         </div>
+        <label className="block text-xs font-semibold text-muted-foreground">Sale date
+          <input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="mt-1 w-full rounded-lg border bg-secondary px-3 py-2 text-sm text-foreground" />
+        </label>
         <div className="grid grid-cols-3 gap-2">
           <Num label="Discount %" v={discount} set={setDiscount} />
           <Num label="Tax %" v={tax} set={setTax} />
@@ -93,10 +111,10 @@ function POS() {
           {method === "Card" && <Row l={`Card machine fee (${cardFee}%)`} r={money(sale.cardFee)} />}
           <div className="flex justify-between pt-1 text-lg font-bold"><span>Total</span><span className="text-primary">{money(sale.total)}</span></div>
         </div>
-        <button disabled={!items.length} onClick={checkout}
+        <Button disabled={!items.length || !saleDate || saving} onClick={checkout}
           className="w-full rounded-xl bg-primary py-3 font-bold text-primary-foreground disabled:opacity-40">
-          Complete Checkout
-        </button>
+          {saving ? "Saving…" : "Complete Checkout"}
+        </Button>
       </div>
     </div>
   );
