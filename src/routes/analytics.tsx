@@ -132,7 +132,7 @@ function Analytics() {
                   )} />
                   <Tooltip {...tip} cursor={{ fill: "var(--secondary)" }} />
                   <Bar dataKey="value" name="Units" radius={[0, 6, 6, 0]}>
-                    {pData.map((item, i) => <Cell key={item.name} fill={COLORS[i % COLORS.length]} />)}
+                    {pData.map((item, i) => <Cell key={item.name} fill={COLORS[i % COLORS.length] ?? "var(--chart-1)"} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>}
@@ -142,7 +142,7 @@ function Analytics() {
                 {mounted && <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={pData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={3} stroke="none">
-                      {pData.map((item, i) => <Cell key={item.name} fill={COLORS[i % COLORS.length]} />)}
+                      {pData.map((item, i) => <Cell key={item.name} fill={COLORS[i % COLORS.length] ?? "var(--chart-1)"} />)}
                     </Pie>
                     <Tooltip {...tip} itemStyle={{ color: "var(--foreground)" }} formatter={(value) => [`${value} units (${Math.round(Number(value) / productUnits * 100)}%)`, "Sold"]} />
                   </PieChart>
