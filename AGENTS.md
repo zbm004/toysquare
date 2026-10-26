@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Product-level analytics aggregate historical sale item names within their recorded categories, so charts retain sales for renamed or removed inventory items.
