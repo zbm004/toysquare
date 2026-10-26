@@ -11,6 +11,8 @@ export const Route = createFileRoute("/inventory")({
       { name: "description", content: "Manage toy stock, costs, prices, margins and low-stock alerts." },
       { property: "og:title", content: "Inventory — Toy Kiosk POS" },
       { property: "og:description", content: "Manage toy stock and pricing." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Inventory,

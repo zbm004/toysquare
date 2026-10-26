@@ -10,6 +10,8 @@ export const Route = createFileRoute("/sales")({
       { name: "description", content: "Monthly sales, expenses and profit breakdown for the toy kiosk." },
       { property: "og:title", content: "Sales & Profit — Toy Kiosk POS" },
       { property: "og:description", content: "Monthly sales, expenses and profit breakdown." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Sales,

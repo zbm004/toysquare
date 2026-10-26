@@ -10,3 +10,5 @@
 <!-- LOVABLE:END -->
 
 - Product-level analytics aggregate historical sale item names within their recorded categories, so charts retain sales for renamed or removed inventory items.
+- Store loading only reads account records; clearing deletes account-scoped records without inserting replacements, so an empty kiosk stays empty.
+- Checkout saves the user-selected local calendar date at noon through the existing sale builder, so reports group backdated sales by the intended day.

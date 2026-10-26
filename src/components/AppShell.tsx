@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { ShoppingCart, Package, Receipt, BarChart3, RotateCcw, LogOut } from "lucide-react";
+import { ShoppingCart, Package, Receipt, BarChart3, Trash2, LogOut } from "lucide-react";
 import { actions, clearStore, loadStore, useStoreLoaded } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { SignIn } from "@/components/SignIn";
 import { toast } from "sonner";
 
@@ -33,10 +34,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex gap-2">
         <button onClick={() => supabase.auth.signOut()} aria-label="Sign out"
           className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"><LogOut className="h-3.5 w-3.5" /></button>
-        <button
-          onClick={() => { if (confirm("Reset all data to demo data?")) { actions.reset().then(() => toast.success("Demo data restored")); } }}
+        <Button variant="secondary" size="sm"
+          onClick={() => { if (confirm("Permanently clear all your products, sales and subcategories? This cannot be undone.")) { actions.reset().then(() => toast.success("All data cleared")).catch(() => {}); } }}
           className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-        ><RotateCcw className="h-3.5 w-3.5" /> Reset Demo Data</button>
+        ><Trash2 className="h-3.5 w-3.5" /> Clear All Data</Button>
         </div>
       </header>
       <main className="mx-auto max-w-6xl p-4">{children}</main>

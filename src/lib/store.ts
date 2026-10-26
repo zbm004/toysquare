@@ -18,34 +18,12 @@ type State = { products: Product[]; sales: Sale[] };
 
 const uid = () => Math.random().toString(36).slice(2, 9).toUpperCase();
 
-function demo(): State {
-  const p: Product[] = [
-    ["Peach Squishy", "Squishies", "🍑", 1.5, 4.99, 24], ["Cat Mochi Squishy", "Squishies", "🐱", 1.2, 3.99, 3],
-    ["Jumbo Bun Squishy", "Squishies", "🥟", 2.5, 7.99, 12], ["Walking Puppy", "Walking Animals", "🐶", 4, 12.99, 8],
-    ["Waddle Penguin", "Walking Animals", "🐧", 3.5, 11.99, 4], ["Hopping Bunny", "Walking Animals", "🐰", 3.8, 12.49, 10],
-    ["Ninja Figure", "Anime Figures", "🥷", 6, 19.99, 6], ["Dragon Hero Figure", "Anime Figures", "🐉", 8, 24.99, 2],
-    ["Speed Racer RC", "RC Cars", "🏎️", 12, 34.99, 5], ["Monster Truck RC", "RC Cars", "🚙", 15, 39.99, 7],
-    ["Pixel Heart Keychain", "Keychains", "💖", 0.6, 2.99, 40], ["Mini Sword Keychain", "Keychains", "🗡️", 0.8, 3.49, 18],
-    ["Bubble Wand", "Other", "🫧", 0.9, 3.99, 15], ["Fidget Spinner", "Other", "🌀", 1, 4.49, 1],
-  ].map(([name, category, icon, cost, price, stock]) => ({ id: uid(), name, category, icon, cost, price, stock }) as Product);
-  const sales: Sale[] = [];
-  const now = new Date();
-  for (let d = 150; d >= 0; d -= 1) {
-    const n = Math.floor(Math.random() * 3);
-    for (let k = 0; k < n; k++) {
-      const date = new Date(now.getTime() - d * 864e5 - Math.random() * 8 * 36e5);
-      const items: SaleItem[] = [];
-      const cnt = 1 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < cnt; i++) {
-        const pr = p[Math.floor(Math.random() * p.length)]!;
-        const ex = items.find((x) => x.productId === pr.id);
-        if (ex) ex.qty++; else items.push({ productId: pr.id, name: pr.name, category: pr.category, qty: 1, cost: pr.cost, price: pr.price });
-      }
-      const method = Math.random() > 0.5 ? "Card" : "Cash";
-      sales.push(buildSale(items, 0, 8, method === "Card" ? 2.5 : 0, method, date));
-    }
-  }
-  return { products: p, sales };
+export const DEFAULT_CHARGES = { discount: 0, tax: 0, cardFee: 0 } as const;
+
+export function localSaleDate(value: string): Date {
+  const date = new Date(`${value}T12:00:00`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(date.getTime())) throw new Error("Choose a valid sale date");
+  return date;
 }
 
 export function buildSale(items: SaleItem[], discountPct: number, taxPct: number, cardPct: number, method: "Cash" | "Card", date = new Date()): Sale {
@@ -85,21 +63,11 @@ async function fetchAll() {
   return { products: (p.data ?? []).map(rowToProduct), sales: (s.data ?? []).map(rowToSale) };
 }
 
-async function seedDemo() {
-  const d = demo();
-  const { data, error } = await supabase.from("products").insert(d.products.map(({ id: _id, ...x }) => x)).select("*");
-  fail(error);
-  const idMap = new Map(d.products.map((p, i) => [p.id, data![i]!.id as string]));
-  const sales = d.sales.map((s) => ({ ...s, items: s.items.map((i) => ({ ...i, productId: idMap.get(i.productId)! })) }));
-  for (let i = 0; i < sales.length; i += 200) fail((await supabase.from("sales").insert(sales.slice(i, i + 200).map(saleRow))).error);
-}
-
 export async function loadStore() {
   if (loading) return;
   loading = true;
   try {
-    let next = await fetchAll();
-    if (next.products.length === 0 && next.sales.length === 0) { await seedDemo(); next = await fetchAll(); }
+    const next = await fetchAll();
     loaded = true; set(next);
   } finally { loading = false; }
 }
@@ -146,7 +114,7 @@ export const actions = {
     if (!data.user) return;
     fail((await supabase.from("sales").delete().eq("user_id", data.user.id)).error);
     fail((await supabase.from("products").delete().eq("user_id", data.user.id)).error);
-    await seedDemo();
+    fail((await supabase.from("subcategories").delete().eq("user_id", data.user.id)).error);
     set(await fetchAll());
   },
 };
