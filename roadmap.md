@@ -1,0 +1,4 @@
+- [ ] Remove demo data and zero default charges.
+- [ ] Clear the requesting account's existing records.
+- [ ] Allow sales entry on chosen dates.
+- [ ] Verify empty state and dated sales persistence.
